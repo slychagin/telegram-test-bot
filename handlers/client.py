@@ -5,6 +5,7 @@ from aiogram.types import ReplyKeyboardRemove
 
 
 async def command_start(message: types.Message):
+    """Bot starts test"""
     try:
         await bot.send_message(
             message.from_user.id,
@@ -20,8 +21,7 @@ async def start_test(message: types.Message):
     await bot.send_message(message.from_user.id, 'Тест начался!')  # reply_markup=ReplyKeyboardRemove()
 
 
-def register_handlers_client(dp: Dispatcher):
+def register_client_handlers(dp: Dispatcher):
     """Register all client handlers"""
     dp.register_message_handler(command_start, commands=['start', 'help'])
     dp.register_message_handler(start_test, commands=['Начать'])
-

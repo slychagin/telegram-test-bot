@@ -7,8 +7,9 @@ async def on_startup(_):
     print('Бот вышел онлайн.')
 
 
-client.register_handlers_client(dp)
-other.register_handlers_other(dp)
+client.register_client_handlers(dp)
+admin.register_admin_handlers(dp)
+other.register_other_handlers(dp)
 
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

@@ -11,6 +11,6 @@ async def filter_forbidden_words(message: types.Message):
         await message.delete()
 
 
-def register_handlers_other(dp: Dispatcher):
+def register_other_handlers(dp: Dispatcher):
     """Register other handlers"""
     dp.register_message_handler(filter_forbidden_words)
