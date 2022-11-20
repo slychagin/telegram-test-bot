@@ -4,6 +4,11 @@ from keyboards.client_keyboard import client_kb
 from aiogram.types import ReplyKeyboardRemove
 
 
+async def parse_test_in_request(message: types.Message):
+    """If the client request contains a test, then the bot starts the test"""
+    await command_start(message)
+
+
 async def command_start(message: types.Message):
     """Bot starts test"""
     try:
@@ -25,3 +30,4 @@ def register_client_handlers(dp: Dispatcher):
     """Register all client handlers"""
     dp.register_message_handler(command_start, commands=['start', 'help'])
     dp.register_message_handler(start_test, commands=['Начать'])
+    dp.register_message_handler(parse_test_in_request, lambda message: 'тест' in message.text.lower())
