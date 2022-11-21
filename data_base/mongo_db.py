@@ -2,10 +2,6 @@ import asyncio
 import motor.motor_asyncio
 
 
-client = None
-collection = None
-
-
 async def connect_db():
     """Connect to MongoDB Atlas"""
     global client, collection
@@ -22,7 +18,14 @@ async def connect_db():
 async def add_test_to_db(state):
     """Add new test to database"""
     async with state.proxy() as data:
-        pass
+        await collection.insert_one(
+            {
+                'name': data['test_name'],
+                'description': data['test_description'],
+                'results': data['test_results'],
+                'questions': data['test_questions']
+            }
+        )
 
 
 

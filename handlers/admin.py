@@ -3,6 +3,7 @@ from create_bot import bot
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from data_base import mongo_db
 from keyboards import admin_keyboard
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -13,8 +14,8 @@ class FSMAdmin(StatesGroup):
     test_name = State()
     test_description = State()
     test_results = State()
-    # question = State()
-    # answer = State()
+    test_questions = State()
+    answers = State()
 
 
 async def make_changes_command(message: types.Message):
@@ -24,7 +25,7 @@ async def make_changes_command(message: types.Message):
     await bot.send_message(
         message.from_user.id,
         'Добро пожаловать в админ панель!\nЧто будем делать?',
-        # reply_markup=admin_keyboard.admin_kb
+        reply_markup=admin_keyboard.admin_kb
     )
     await message.delete()
 
@@ -69,11 +70,33 @@ async def load_test_results(message: types.Message, state: FSMContext):
     if message.from_user.id == ID:
         async with state.proxy() as data:
             data['test_results'] = message.text
+        await FSMAdmin.next()
+        await message.answer(
+            'Введите вопросы для теста.'
+            '\nЧтобы закончить вводить вопросы и сохранить тест нажмите Сохранить.',
+            reply_markup=admin_keyboard.save_kb
+        )
 
+
+async def load_test_questions(message: types.Message, state: FSMContext):
+    """Load questions"""
+    if message.from_user.id == ID:
         async with state.proxy() as data:
-            await message.answer(str(data))
-
+            data['test_questions'] = message.text
+        await mongo_db.add_test_to_db(state)
         await state.finish()
+        await message.answer('Тест сохранен в базе данных')
+
+
+# async def save_handler(message: types.Message, state: FSMContext):
+#     """Save data to database when admin push save button"""
+#     await mongo_db.add_test_to_db(state)
+#     await state.finish()
+#     await message.answer('Тест сохранен в базе данных')
+
+
+
+
 
 
 
@@ -84,13 +107,12 @@ async def load_test_results(message: types.Message, state: FSMContext):
 
 def register_admin_handlers(dp: Dispatcher):
     """Register all admin handlers"""
-    dp.register_message_handler(start_state, commands='Загрузить', state=None)
+    dp.register_message_handler(start_state, commands=['Загрузить'], state=None)
     dp.register_message_handler(make_changes_command, commands=['admin'], is_chat_admin=True)
     dp.register_message_handler(cancel_handler, state='*', commands='отмена')
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state='*')
     dp.register_message_handler(load_test_name, state=FSMAdmin.test_name)
     dp.register_message_handler(load_test_description, state=FSMAdmin.test_description)
     dp.register_message_handler(load_test_results, state=FSMAdmin.test_results)
-
-
-
+    dp.register_message_handler(load_test_questions, state=FSMAdmin.test_questions)
+    # dp.register_message_handler(save_handler, state='*', commands=['Сохранить'])
