@@ -1,6 +1,8 @@
 import asyncio
 import motor.motor_asyncio
 
+from create_bot import dp
+
 
 async def connect_db():
     """Connect to MongoDB Atlas"""
@@ -17,17 +19,36 @@ async def connect_db():
 
 async def add_test_to_db(state):
     """Add new test to database"""
+    current_state = await dp.current_state().get_data()
+    print(current_state)
+    await collection.insert_one(current_state)
+
+
+async def update_test(state):
+    """Update new test"""
+    current_state = await dp.current_state().get_data()
+    print(current_state)
     async with state.proxy() as data:
-        await collection.insert_one(
-            {
-                'name': data['test_name'],
-                'description': data['test_description'],
-                'results': data['test_results'],
-                'questions': data['test_questions']
-            }
+        await collection.update_one(
+            {'test_name': data['test_name']},
+            {'$set': current_state}
         )
 
 
+async def read_all_questions(state):
+    """Read all questions from database"""
+    async with state.proxy() as data:
+        questions = collection.find({'test_name': data['test_name']})
+
+    async for document in questions:
+        return document['test_questions']
+
+
+
+# async def add_question(state):
+#     """Add question to db"""
+#     async with state.proxy() as data:
+#         await collection.find_one(data['test_question'])
 
 
 
