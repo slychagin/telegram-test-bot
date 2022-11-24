@@ -17,31 +17,29 @@ async def connect_db():
         print("Unable to connect to the server.")
 
 
-async def add_test_to_db(state):
+async def add_test_to_db(data):
     """Add new test to database"""
-    current_state = await dp.current_state().get_data()
-    print(current_state)
-    await collection.insert_one(current_state)
+    await collection.insert_one(data)
 
 
-async def update_test(state):
-    """Update new test"""
-    current_state = await dp.current_state().get_data()
-    print(current_state)
-    async with state.proxy() as data:
-        await collection.update_one(
-            {'test_name': data['test_name']},
-            {'$set': current_state}
-        )
-
-
-async def read_all_questions(state):
-    """Read all questions from database"""
-    async with state.proxy() as data:
-        questions = collection.find({'test_name': data['test_name']})
-
-    async for document in questions:
-        return document['test_questions']
+# async def update_test(state):
+#     """Update new test"""
+#     current_state = await dp.current_state().get_data()
+#     print(current_state)
+#     async with state.proxy() as data:
+#         await collection.update_one(
+#             {'test_name': data['test_name']},
+#             {'$set': current_state}
+#         )
+#
+#
+# async def read_all_questions(state):
+#     """Read all questions from database"""
+#     async with state.proxy() as data:
+#         questions = collection.find({'test_name': data['test_name']})
+#
+#     async for document in questions:
+#         return document['test_questions']
 
 
 

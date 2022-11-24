@@ -1,0 +1,25 @@
+{
+"test_name": "Психологический тест",
+"test_description": "Описание теста",
+"test_results": "Результаты теста",
+"test_questions": [
+    {
+      "question": [{
+        "question_description":  "Описание вопроса 1",
+        "answers": [{"да": 2}, {"нет": 1}, {"не знаю": 0}]
+      }]
+    },
+    {
+      "question": [{
+        "question_description":  "Описание вопроса 2",
+        "answers": [{"да": 2}, {"нет": 1}, {"не знаю": 0}]
+      }]
+    },
+    {
+      "question": [{
+        "question_description":  "Описание вопроса 3",
+        "answers": [{"да": 2}, {"нет": 1}, {"не знаю": 0}]
+      }]
+    }
+]
+}
