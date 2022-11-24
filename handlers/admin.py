@@ -1,13 +1,12 @@
 import json
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
-
 from create_bot import bot
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from data_base import mongo_db
 from keyboards import admin_keyboard
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand, ReplyKeyboardRemove, ContentTypes
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ID = None
 
@@ -53,22 +52,56 @@ async def load_test(message: types.Message, state: FSMContext):
     if message.from_user.id == ID:
         file_id = message.document.file_id
         bytes_file = await bot.download_file_by_id(file_id)
-        str_data = bytes_file.getvalue().decode('utf-8')
-        dict_data = json.loads(str_data)
+        try:
+            str_data = bytes_file.getvalue().decode('utf-8')
+            dict_data = json.loads(str_data)
+            # print(dict_data)
+            await mongo_db.add_test_to_db(dict_data)
 
-        print(type(dict_data))
-        print(dict_data)
-        await mongo_db.add_test_to_db(dict_data)
-
-        await state.finish()
-        await message.answer('Тест загружен в базу данных.')
-
-
-
-
+            await state.finish()
+            await message.answer('Тест загружен в базу данных.')
+        except:
+            await message.answer('Файл невозможно загрузить в базу данных.\n'
+                                 'Необходим файл установленного формата.')
 
 
+async def callback_run(callback_query: types.CallbackQuery):
+    """Delete chosen test"""
 
+    test_name = callback_query.data
+    await mongo_db.db_delete_command(test_name)
+    await callback_query.answer(
+        text=f'"{test_name}" удален.',
+        show_alert=True
+    )
+    await bot.delete_message(chat_id=ID, message_id=callback_query.message['message_id'])
+
+
+async def delete_test(message: types.Message):
+    """Load list of tests with delete buttons. Allow to delete chosen test"""
+    if message.from_user.id == ID:
+        count_test = await mongo_db.db_count_test()
+        if count_test == 0:
+            await bot.send_message(
+                chat_id=ID,
+                text=f'В базе данных тестов нет.'
+            )
+        else:
+            await bot.send_message(
+                chat_id=ID,
+                text=f'Количество тестов в базе данных: {count_test}'
+            )
+
+        tests = await mongo_db.db_read_all()
+        for test in tests:
+            await bot.send_message(
+                chat_id=ID,
+                text=f'{test["test_name"]}',
+                reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton(
+                    text='Удалить',
+                    callback_data=f'{test["test_name"]}'
+                ))
+            )
 
 
 def register_admin_handlers(dp: Dispatcher):
@@ -78,3 +111,5 @@ def register_admin_handlers(dp: Dispatcher):
     dp.register_message_handler(cancel_handler, state='*', commands=['Отмена'])
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state='*')
     dp.register_message_handler(load_test, content_types=['document'], state=FSMAdmin.load_file)
+    dp.register_message_handler(delete_test, commands=['Удалить'])
+    dp.register_callback_query_handler(callback_run)
