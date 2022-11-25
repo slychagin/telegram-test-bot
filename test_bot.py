@@ -10,8 +10,8 @@ async def on_startup(_):
     await mongo_db.connect_db()
 
 
-client.register_client_handlers(dp)
 admin.register_admin_handlers(dp)
+client.register_client_handlers(dp)
 other.register_other_handlers(dp)
 
 

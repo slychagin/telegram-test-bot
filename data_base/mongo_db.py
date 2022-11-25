@@ -1,4 +1,7 @@
+from pprint import pprint
+
 import motor.motor_asyncio
+from bson import ObjectId
 
 
 async def connect_db():
@@ -31,6 +34,12 @@ async def db_read_all():
     return documents
 
 
-async def db_delete_command(test_name):
+async def db_read_one(test_id):
+    """Read one test from db"""
+    document = await collection.find_one({'_id': ObjectId(test_id)})
+    return document
+
+
+async def db_delete_command(test_id):
     """Delete test from db by test name"""
-    await collection.delete_one({'test_name': test_name})
+    await collection.delete_one({'_id': ObjectId(test_id)})
