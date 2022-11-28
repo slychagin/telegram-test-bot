@@ -1,8 +1,6 @@
 from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton
 )
 
 
@@ -13,5 +11,5 @@ chose_kb.add(btn_chose_test)
 
 # Add start test button
 btn_start_test = KeyboardButton('/Начать')
-start_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-start_kb.add(btn_start_test)
+start_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+start_kb.add(btn_start_test).add(btn_chose_test)

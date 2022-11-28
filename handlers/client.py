@@ -1,11 +1,23 @@
-from pprint import pprint
-
+import asyncio
+from aiogram.dispatcher.filters.state import StatesGroup, State, StatesGroupMeta
+from aiogram_dialog.widgets.kbd import Button, Column
+from aiogram_dialog.widgets.text import Const
+from aiogram.types import CallbackQuery, Message
+from aiogram_dialog import DialogManager, Window, Dialog, StartMode
 from aiogram import types, Dispatcher
-from create_bot import bot
+from create_bot import bot, registry
 from data_base import mongo_db
 from keyboards.client_keyboard import chose_kb, start_kb
-from aiogram.types import ReplyKeyboardRemove
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+
+test_id = None
+
+
+class TestState(StatesGroup):
+    state_list = [f'state_{i} = State()' for i in range(4)]
+    for state in state_list:
+        exec(state)
 
 
 async def parse_test_in_request(message: types.Message):
@@ -30,15 +42,17 @@ async def command_start(message: types.Message):
 
 async def callback_run_test(callback_query: types.CallbackQuery):
     """Run chosen test"""
+    global test_id
     test_id = callback_query.data.replace('show ', '')
     test_data = await mongo_db.db_read_one(test_id)
-    print(test_data)
+    # print(test_data)
 
     await bot.send_message(
         chat_id=callback_query.message.chat.id,
         text=f'{test_data["test_name"]}\n\n'
              f'{test_data["test_description"]}\n\n'
-             f'Для прохождения теста нажмите "Начать"',
+             f'Для прохождения теста нажмите "Начать"\n'
+             f'Для выбора другого теста нажмите "Выбрать тест"',
         reply_markup=start_kb
     )
 
@@ -73,13 +87,84 @@ async def chose_test(message: types.Message):
         )
 
 
-async def start_test(message: types.Message):
-    """Start test, show question with answers one by one"""
-    pass
+async def to_next(callback: CallbackQuery, button: Button, manager: DialogManager):
+    await manager.dialog().next()
+
+
+async def start_test(m: Message, dialog_manager: DialogManager):
+    test_data = await mongo_db.db_read_one(test_id)
+    # print(test_data)
+    questions_amount = len(test_data['test_questions'])
+
+    print(TestState.all_states)
+
+
+
+    window_1 = Window(
+        Const("Вопрос 1"),
+        Column(
+            Button(Const("1"), id="1", on_click=to_next),
+            Button(Const("2"), id="2", on_click=to_next),
+            Button(Const("3"), id="3", on_click=to_next)
+        ),
+        state=TestState.all_states[0],
+    )
+
+    window_2 = Window(
+        Const("Вопрос 2"),
+        Column(
+            Button(Const("10"), id="4", on_click=to_next),
+            Button(Const("20"), id="5", on_click=to_next),
+            Button(Const("30"), id="6", on_click=to_next)
+        ),
+        state=TestState.all_states[1],
+    )
+
+    window_3 = Window(
+        Const("Вопрос 3"),
+        Column(
+            Button(Const("100"), id="7", on_click=to_next),
+            Button(Const("200"), id="8", on_click=to_next),
+            Button(Const("300"), id="9", on_click=to_next)
+        ),
+        state=TestState.all_states[2],
+    )
+
+    window_4 = Window(
+        Const("Вопрос 4"),
+        Column(
+            Button(Const("1000"), id="10", on_click=to_next),
+            Button(Const("2000"), id="11", on_click=to_next),
+            Button(Const("3000"), id="12", on_click=to_next)
+        ),
+        state=TestState.all_states[3],
+    )
+
+    registry.register(
+        Dialog(
+            window_1,
+            window_2,
+            window_3,
+            window_4
+        )
+    )
+
+    await dialog_manager.start(state=TestState.all_states[0], mode=StartMode.RESET_STACK)
 
 
 
 
+
+    # for i, state in enumerate(all_states):
+    #     window = Window(
+    #         Const(f"Вопрос {i}"),
+    #         Column(Button(Const(f"{i}"), id=f"{i}", on_click=to_next)),
+    #         state=state.group,
+    #     )
+    #
+    #     registry.register(Dialog(window))
+    #
+    # await dialog_manager.start(state=all_states[0], mode=StartMode.RESET_STACK)
 
 
 
