@@ -1,6 +1,5 @@
-import asyncio
-from aiogram.dispatcher.filters.state import StatesGroup, State, StatesGroupMeta
-from aiogram_dialog.widgets.kbd import Button, Column
+from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram_dialog.widgets.kbd import Button, Column, Keyboard
 from aiogram_dialog.widgets.text import Const
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, Window, Dialog, StartMode
@@ -15,9 +14,14 @@ test_id = None
 
 
 class TestState(StatesGroup):
-    state_list = [f'state_{i} = State()' for i in range(4)]
+    """Create states for switch windows with questions"""
+    # Get 100 states (this states we use for questions from 1 to n - 1, were n < 100)
+    state_list = [f'state_{i}=State()' for i in range(101)]
     for state in state_list:
         exec(state)
+
+    # State fo last question
+    finish_state = State()
 
 
 async def parse_test_in_request(message: types.Message):
@@ -45,7 +49,6 @@ async def callback_run_test(callback_query: types.CallbackQuery):
     global test_id
     test_id = callback_query.data.replace('show ', '')
     test_data = await mongo_db.db_read_one(test_id)
-    # print(test_data)
 
     await bot.send_message(
         chat_id=callback_query.message.chat.id,
@@ -88,66 +91,51 @@ async def chose_test(message: types.Message):
 
 
 async def to_next(callback: CallbackQuery, button: Button, manager: DialogManager):
+    """Switch to the next question"""
     await manager.dialog().next()
 
 
 async def start_test(m: Message, dialog_manager: DialogManager):
+    """Show questions with answers on buttons one by one"""
     test_data = await mongo_db.db_read_one(test_id)
-    # print(test_data)
     questions_amount = len(test_data['test_questions'])
+    states = TestState.all_states
+    print(test_data)
 
-    print(TestState.all_states)
+    window_list = []
+
+    # Create windows for questions from first to lust by one
+    for i, question in enumerate(test_data['test_questions']):
+        question = test_data['test_questions'][i]['question_description']
+        answers_list = test_data['test_questions'][i]['answers']
+
+        if i < questions_amount:
+            window = Window(
+                Const(f'Вопрос {i + 1} из {questions_amount}\n{question}'),
+                Column(
+                    *[Button(
+                        Const(f'{list(answer.keys())[0]}'),
+                        id=f'{n}',
+                        on_click=to_next
+                    ) for n, answer in enumerate(answers_list)]),
+                state=states[i],
+            )
+        else:
+            window = Window(
+                Const(f'Вопрос {questions_amount} из {questions_amount}\n{question}'),
+                Column(
+                    *[Button(
+                        Const(f'{list(answer.keys())[0]}'),
+                        id=f'{n}',
+                        on_click=to_next
+                    ) for n, answer in enumerate(answers_list)]),
+                state=TestState.finish_state,
+            )
+
+        window_list.append(window)
 
 
-
-    window_1 = Window(
-        Const("Вопрос 1"),
-        Column(
-            Button(Const("1"), id="1", on_click=to_next),
-            Button(Const("2"), id="2", on_click=to_next),
-            Button(Const("3"), id="3", on_click=to_next)
-        ),
-        state=TestState.all_states[0],
-    )
-
-    window_2 = Window(
-        Const("Вопрос 2"),
-        Column(
-            Button(Const("10"), id="4", on_click=to_next),
-            Button(Const("20"), id="5", on_click=to_next),
-            Button(Const("30"), id="6", on_click=to_next)
-        ),
-        state=TestState.all_states[1],
-    )
-
-    window_3 = Window(
-        Const("Вопрос 3"),
-        Column(
-            Button(Const("100"), id="7", on_click=to_next),
-            Button(Const("200"), id="8", on_click=to_next),
-            Button(Const("300"), id="9", on_click=to_next)
-        ),
-        state=TestState.all_states[2],
-    )
-
-    window_4 = Window(
-        Const("Вопрос 4"),
-        Column(
-            Button(Const("1000"), id="10", on_click=to_next),
-            Button(Const("2000"), id="11", on_click=to_next),
-            Button(Const("3000"), id="12", on_click=to_next)
-        ),
-        state=TestState.all_states[3],
-    )
-
-    registry.register(
-        Dialog(
-            window_1,
-            window_2,
-            window_3,
-            window_4
-        )
-    )
+    registry.register(Dialog(*window_list))
 
     await dialog_manager.start(state=TestState.all_states[0], mode=StartMode.RESET_STACK)
 
@@ -155,21 +143,52 @@ async def start_test(m: Message, dialog_manager: DialogManager):
 
 
 
-    # for i, state in enumerate(all_states):
-    #     window = Window(
-    #         Const(f"Вопрос {i}"),
-    #         Column(Button(Const(f"{i}"), id=f"{i}", on_click=to_next)),
-    #         state=state.group,
-    #     )
-    #
-    #     registry.register(Dialog(window))
-    #
-    # await dialog_manager.start(state=all_states[0], mode=StartMode.RESET_STACK)
 
-
-
-
-
+# async def start_test(m: Message, dialog_manager: DialogManager):
+#     test_data = await mongo_db.db_read_one(test_id)
+#     print(test_data)
+#     questions_amount = len(test_data['test_questions'])
+#
+#
+#     window_1 = Window(
+#         Const("Вопрос 1"),
+#         Column(
+#             Button(Const("1"), id="1", on_click=to_next),
+#             Button(Const("2"), id="2", on_click=to_next),
+#             Button(Const("3"), id="3", on_click=to_next)
+#         ),
+#         state=TestState.all_states[0],
+#     )
+#
+#     window_2 = Window(
+#         Const("Вопрос 2"),
+#         Column(
+#             Button(Const("10"), id="4", on_click=to_next),
+#             Button(Const("20"), id="5", on_click=to_next),
+#             Button(Const("30"), id="6", on_click=to_next)
+#         ),
+#         state=TestState.all_states[1],
+#     )
+#
+#     window_3 = Window(
+#         Const("Вопрос 3"),
+#         Column(
+#             Button(Const("100"), id="7", on_click=to_next),
+#             Button(Const("200"), id="8", on_click=to_next),
+#             Button(Const("300"), id="9", on_click=to_next)
+#         ),
+#         state=TestState.all_states[-1],
+#     )
+#
+#     registry.register(
+#         Dialog(
+#             window_1,
+#             window_2,
+#             window_3
+#         )
+#     )
+#
+#     await dialog_manager.start(state=TestState.all_states[0], mode=StartMode.RESET_STACK)
 
 
 
