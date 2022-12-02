@@ -34,7 +34,7 @@ async def start_command(message: types.Message):
     """Start dialog to load a new test to database"""
     if message.from_user.id == ID:
         await FSMAdmin.load_file.set()
-        await message.answer('Прикрепите файл в формате JSON.')
+        await message.reply('Прикрепите файл в формате JSON.')
 
 
 async def cancel_handler(message: types.Message, state: FSMContext):
@@ -44,7 +44,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         if current_state is None:
             return
         await state.finish()
-        await message.answer('ОК')
+        await message.reply('ОК')
 
 
 async def load_test(message: types.Message, state: FSMContext):
