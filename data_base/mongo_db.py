@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import motor.motor_asyncio
 from bson import ObjectId
 

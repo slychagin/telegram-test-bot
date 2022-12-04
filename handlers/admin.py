@@ -1,12 +1,12 @@
 import json
 from aiogram import types, Dispatcher
-from aiogram.dispatcher.filters import Text
-from create_bot import bot
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text, AdminFilter
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from create_bot import bot, dp
 from data_base import mongo_db
 from keyboards import admin_keyboard
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ID = None
 
@@ -27,16 +27,17 @@ async def make_changes_command(message: types.Message):
         'Для отмены нажмите "Отмена".',
         reply_markup=admin_keyboard.admin_kb
     )
-    await message.delete()
 
 
 async def start_command(message: types.Message):
     """Start dialog to load a new test to database"""
     if message.from_user.id == ID:
         await FSMAdmin.load_file.set()
-        await message.reply('Прикрепите файл в формате JSON.')
+        await message.answer('Прикрепите файл в формате JSON')
 
 
+@dp.message_handler(state='*', commands=['Отмена'])
+@dp.message_handler(Text(equals='отмена', ignore_case=True), state='*')
 async def cancel_handler(message: types.Message, state: FSMContext):
     """Escaping from all states"""
     if message.from_user.id == ID:
@@ -55,25 +56,13 @@ async def load_test(message: types.Message, state: FSMContext):
         try:
             str_data = bytes_file.getvalue().decode('utf-8')
             dict_data = json.loads(str_data)
-            # print(dict_data)
             await mongo_db.add_test_to_db(dict_data)
 
             await state.finish()
-            await message.answer('Тест загружен в базу данных.')
+            await message.answer('Тест загружен в базу данных\U0001F44C')
         except:
-            await message.answer('Файл невозможно загрузить в базу данных.\n'
+            await message.answer('\U0000274C Файл невозможно загрузить в базу данных.\n'
                                  'Необходим файл установленного формата.')
-
-
-async def callback_delete(callback_query: types.CallbackQuery):
-    """Delete chosen test"""
-    test_id = callback_query.data
-    await mongo_db.db_delete_command(test_id.replace('del ', ''))
-    await callback_query.answer(
-        text=f'Тест удален.',
-        show_alert=True
-    )
-    await bot.delete_message(chat_id=ID, message_id=callback_query.message['message_id'])
 
 
 async def delete_test(message: types.Message):
@@ -103,12 +92,23 @@ async def delete_test(message: types.Message):
             )
 
 
+async def callback_delete(callback_query: types.CallbackQuery):
+    """Delete chosen test"""
+    test_id = callback_query.data
+    await mongo_db.db_delete_command(test_id.replace('del ', ''))
+    await callback_query.answer(
+        text=f'Тест удален.',
+        show_alert=True
+    )
+    await bot.delete_message(chat_id=ID, message_id=callback_query.message['message_id'])
+
+
 def register_admin_handlers(dp: Dispatcher):
     """Register all admin handlers"""
-    dp.register_message_handler(make_changes_command, commands=['admin'], is_chat_admin=True)
+    dp.register_message_handler(make_changes_command, AdminFilter(is_chat_admin=True), commands=['admin'])
     dp.register_message_handler(start_command, commands=['Загрузить'], state=None)
-    dp.register_message_handler(cancel_handler, state='*', commands=['Отмена'])
-    dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state='*')
+    dp.register_message_handler(start_command, Text(contains='Загрузить', ignore_case=True))
     dp.register_message_handler(load_test, content_types=['document'], state=FSMAdmin.load_file)
     dp.register_message_handler(delete_test, commands=['Удалить'])
+    dp.register_message_handler(delete_test, Text(contains='Удалить', ignore_case=True))
     dp.register_callback_query_handler(callback_delete, lambda x: x.data and x.data.startswith('del '))
