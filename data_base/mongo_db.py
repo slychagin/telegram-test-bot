@@ -1,11 +1,16 @@
 import motor.motor_asyncio
 from bson import ObjectId
+import os
+from dotenv import load_dotenv
+
+
+load_dotenv(override=True)
 
 
 async def connect_db():
     """Connect to MongoDB Atlas"""
     global client, collection
-    conn_str = 'mongodb+srv://Serhio:Pandora777@cluster0.mvbi9na.mongodb.net/?retryWrites=true&w=majority'
+    conn_str = os.environ.get('MONGO_DB_CONN')
     client = motor.motor_asyncio.AsyncIOMotorClient(conn_str, serverSelectionTimeoutMS=5000)
     collection = client.online_test_db.test
 
