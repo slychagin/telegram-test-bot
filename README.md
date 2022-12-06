@@ -15,11 +15,8 @@
 - MongoDB.
 
 ### To run locally:
-- `git clone https://github.com/slychagin/sushi-bot.git`;
-- установите все зависимости из файла `requirements.txt`;
-- подключите бота в Telegram и получите токен;
-- в файле `create_bot.py` подставьте свой токен;
-- запустите файл `telegram_bot.py`
-
-### Попробовать онлайн:
-https://t.me/Sushi_ProfiBot
+- `git clone https://github.com/slychagin/telegram-test-bot.git`;
+- install all requiremets from `requirements.txt`;
+- connect the bot to Telegram and get a token;
+- in file `create_bot.py` isert your token;
+- run file `telegram_bot.py`
