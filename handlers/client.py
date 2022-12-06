@@ -84,11 +84,12 @@ async def callback_run_test(callback_query: types.CallbackQuery):
     global test_id
     test_id = callback_query.data.replace('show ', '')
     test_data = await mongo_db.db_read_one(test_id)
+    questions_amount = len(test_data['test_questions'])
 
     await bot.send_message(
         chat_id=callback_query.message.chat.id,
         text=f'\U0001F4D6 {test_data["test_name"]}\n\n'
-             f'\U0000270F {test_data["test_description"]}\n\n\n'
+             f'\U000023F1 Количество вопросов: {questions_amount}\n\n'
              f'\U00002757 Для прохождения теста нажми "Начать"'
              f'\n\U00002753 Для выхода "Выйти"',
         reply_markup=start_kb
@@ -116,7 +117,6 @@ async def start_test(message: types.Message, state: FSMContext):
         for i, question in enumerate(test_data['test_questions']):
             if i != 0:
                 break
-
             question = test_data['test_questions'][i]['question_description']
             answers = test_data['test_questions'][i]['answers']
             answer_buttons_kb = InlineKeyboardMarkup()
@@ -243,7 +243,7 @@ async def callback_press_answer_button(callback_query: types.CallbackQuery, stat
             await state.finish()
 
 
-async def callback_next_test(callback_query: types.CallbackQuery, state: FSMContext):
+async def callback_next_test(callback_query: types.CallbackQuery):
     """After complete test user can choose another test"""
     await FSMClient.chose.set()
     await bot.send_message(
@@ -256,11 +256,16 @@ async def callback_next_test(callback_query: types.CallbackQuery, state: FSMCont
 def register_client_handlers(dp: Dispatcher):
     """Register all client handlers"""
     dp.register_message_handler(command_start, commands=['start', 'help'], state=None)
+
     dp.register_message_handler(chose_test, commands=['Выбрать тест'], state=FSMClient.chose)
     dp.register_message_handler(chose_test, Text(contains='Выбрать тест', ignore_case=True), state=FSMClient.chose)
-    dp.register_callback_query_handler(callback_run_test, lambda x: x.data and x.data.startswith('show '), state=FSMClient.show_tests)
+
+    dp.register_callback_query_handler(
+        callback_run_test, lambda x: x.data and x.data.startswith('show '),
+        state=FSMClient.show_tests
+    )
     dp.register_message_handler(start_test, commands=['Начать'], state=FSMClient.testing)
     dp.register_message_handler(start_test, Text(contains='Начать', ignore_case=True), state=FSMClient.testing)
+
     dp.register_callback_query_handler(callback_press_answer_button, state=FSMClient.answers)
     dp.register_callback_query_handler(callback_next_test, lambda x: x.data and x.data.startswith('Выбрать тест'))
-

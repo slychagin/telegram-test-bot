@@ -22,7 +22,7 @@ right_answer = [
     'Гениально\U0001F60E',
     'Я в тебе не сомневался\U0001F609',
     'Замечательно\U0001F929',
-    '+1 балл\U0001F60E']
+    'Да ты умён\U0001F60E']
 
 congratulations = [
     'Твоей гениальности позавидовал бы сам Эйнштейн!\U0001F913',
@@ -63,5 +63,7 @@ def get_result_congrat(right_answers, questions_amount):
         return 'Отлично!\U0001F600\nДа ты практически гений\U0001F609'
     if right_answer_percent < 0.9:
         return 'Еще немного и ты достигнешь полного просветления\U0001F60C'
+    if right_answer_percent < 1:
+        return 'Отлично!\nПрактически 100% правильных ответов!\nТак держать\U0001F60C'
     if right_answer_percent == 1:
         return choice(congratulations)
