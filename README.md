@@ -4,16 +4,17 @@
 
 
 ### Client part:
-![client]()
+![client](https://github.com/slychagin/telegram-test-bot/blob/master/demo_gifs/client.gif)
 
 ### Admin part:
-![admin]()
+![admin](https://github.com/slychagin/telegram-test-bot/blob/master/demo_gifs/admin.gif)
 
-### Что использовано для создания бота:
+### technologies used to create the bot:
 - Python 3;
-- aiogram.
+- aiogram;
+- MongoDB.
 
-### Для запуска локально:
+### To run locally:
 - `git clone https://github.com/slychagin/sushi-bot.git`;
 - установите все зависимости из файла `requirements.txt`;
 - подключите бота в Telegram и получите токен;
