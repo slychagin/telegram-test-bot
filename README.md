@@ -21,8 +21,8 @@ The bot is written so that you can add an unlimited number of tests with an unli
 
 ### To run locally:
 - `git clone https://github.com/slychagin/telegram-test-bot.git`;
-- install all requiremets from `requirements.txt`;
+- install all requirements from `requirements.txt`;
 - connect the bot to Telegram and get a token;
 - also you need connect to MongoDB;
-- in file `create_bot.py` isert your token;
+- in file `create_bot.py` insert your token;
 - run file `telegram_bot.py`
